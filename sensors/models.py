@@ -1,13 +1,13 @@
 from django.db import models
 from sensors.utils import pressure_at_sealevel
+from model_utils.managers import InheritanceManager
 
 
 class Sensor(models.Model):
     sensor_name = models.CharField(max_length=200)
     sensor_address = models.CharField(max_length=100, unique=True)
 
-    class Meta:
-        abstract = True
+    objects = InheritanceManager()
 
     def __str__(self):
         return self.sensor_name
@@ -38,6 +38,9 @@ class BMP180(Sensor):
             Measurement(sensor=self, type=Measurement.TEMPERATURE, value=temperature),
             Measurement(sensor=self, type=Measurement.PRESSURE, value=pressure),
         ]
+
+    def __str__(self):
+        return 'BMP180 @{0}'.format(self.sensor_name)
 
 
 class Measurement(models.Model):
