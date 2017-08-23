@@ -31,7 +31,7 @@ class MessageProcessor:
             ip_addr, port = address
 
             # save to django
-            sensor = Sensor.objects.get(sensor_address=ip_addr)
+            sensor = Sensor.objects.select_subclasses().get(sensor_address=ip_addr)
             sensor.parse_and_save(data, set_timestamp=timestamp)
 
             self.message_queue.task_done()
@@ -65,12 +65,15 @@ def main():
     server = UDPServer(('0.0.0.0', args.port), SensorRequestHandler)
     server.sensor_message_queue = message_processor.message_queue
     server_thread = Thread(target=server.serve_forever)
+    server_thread.start()
 
     for command in iter(partial(input, '> '), 'stop'):
         pass
 
+    print("Shutting down UDP listener...")
     server.shutdown()
     server_thread.join()
+    print("Waiting for queue to finish...")
     message_processor.join()
 
 if __name__ == '__main__':
